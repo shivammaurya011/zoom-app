@@ -1,37 +1,61 @@
 const express = require('express');
 const axios = require('axios');
-const bodyParser = require('body-parser');
-
 const app = express();
-app.use(bodyParser.json());
+const port = 3000;
 
-app.post('/getZoomToken', async (req, res) => {
-  const code = req.body.code;
-  const clientID = 'TCf3V1BOQbuf_v8XjLemUw';
-  const clientSecret = 'spqmMeJvrSUE2CmO9fp0BAKFccn70nHs';
-  const redirectUri = 'https://9f44-2401-4900-1cbd-61d1-44a2-7e4f-6011-81d.ngrok-free.app/auth';
+// Load your Zoom OAuth credentials
+const clientID = 'TCf3V1BOQbuf_v8XjLemUw';
+const clientSecret = 'spqmMeJvrSUE2CmO9fp0BAKFccn70nHs';
+const redirectUri = 'https://zoom-app-snowy.vercel.app/auth';
 
-  const tokenUrl = 'https://zoom.us/oauth/token';
-  const authHeader = Buffer.from(`${clientID}:${clientSecret}`).toString('base64');
+let accessToken = '';
+
+app.get('/auth', async (req, res) => {
+  const authCode = req.query.code;
+  if (!authCode) {
+    console.log('Authorization code is missing');
+    return res.status(400).json({ error: 'Authorization code is missing' });
+  }
 
   try {
-    const response = await axios.post(tokenUrl, new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-    }), {
-      headers: {
-        'Authorization': `Basic ${authHeader}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const tokenResponse = await axios.post('https://zoom.us/oauth/token', null, {
+      params: {
+        grant_type: 'authorization_code',
+        code: authCode,
+        redirect_uri: redirectUri,
+      },
+      auth: {
+        username: clientID,
+        password: clientSecret,
       },
     });
-
-    res.json(response.data);
+    accessToken = tokenResponse.data.access_token;
   } catch (error) {
-    res.status(500).json({ error: error.response ? error.response.data : error.message });
+    console.error('Error fetching access token:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+// New /user endpoint to fetch Zoom user data
+app.get('/user', async (req, res) => {
+  if (!accessToken) {
+    return res.status(400).json({ error: 'Access token is missing' });
+  }
+
+  try {
+    const userInfoResponse = await axios.get('https://api.zoom.us/v2/users/me', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    res.json(userInfoResponse.data);
+  } catch (error) {
+    console.error('Error fetching user data:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to fetch user data' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });

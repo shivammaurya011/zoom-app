@@ -4,8 +4,7 @@ const Home = () => {
 
   return (
     <div>
-      <h1>Pepsales</h1>
-      <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Atque laboriosam, modi voluptatibus repellendus enim illo neque tenetur suscipit, aliquid molestiae ipsa dolore sed facere blanditiis perspiciatis qui id laudantium quae!</p>
+      <h1>Zoom App</h1>
     </div>
   );
 };
