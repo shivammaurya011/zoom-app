@@ -7,7 +7,7 @@ const Home = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/api/posts')
+    axios.get('https://zoom-app-56u2.onrender.com/api/posts')
       .then(response => {
         console.log('API Response:', response.data);
         if (Array.isArray(response.data)) {
